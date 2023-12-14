@@ -1,0 +1,12 @@
+**/.DS_Store/*
+*.DS_Store
+personal.auto.tfvars
+**/.personal.auto.tfvars/*
+
+# Local .terraform directories and files
+**/.terraform/*
+.terraform*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
