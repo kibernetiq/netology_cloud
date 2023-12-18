@@ -25,12 +25,6 @@ variable "public_cidr" {
   description = "https://cloud.yandex.ru/docs/vpc/operations/subnet-create"
 }
 
-variable "private_cidr" {
-  type        = list(string)
-  default     = ["192.168.20.0/24"]
-  description = "https://cloud.yandex.ru/docs/vpc/operations/subnet-create"
-}
-
 variable "vpc_name" {
   type        = string
   default     = "netology"
@@ -61,4 +55,9 @@ variable "metadata_map" {
       serial-port-enable = 1
     }
   }
+}
+
+variable "image_id" {
+  type        = string
+  default     = "https://storage.yandexcloud.net/test-storage-picture/123.png"
 }

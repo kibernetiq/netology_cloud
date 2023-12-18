@@ -1,122 +1,63 @@
-# Creating a network
-resource "yandex_vpc_network" "netology" {
-  name        = var.vpc_name
-}
-
-# Creating a subnets
-resource "yandex_vpc_subnet" "public-subnet" {
-  name           = "public"
-  zone           = var.default_zone
-  network_id     = yandex_vpc_network.netology.id
-  v4_cidr_blocks = var.public_cidr
-}
-
-resource "yandex_vpc_subnet" "private-subnet" {
-  name           = "private"
-  zone           = var.default_zone
-  network_id     = yandex_vpc_network.netology.id
-  v4_cidr_blocks = var.private_cidr
-  route_table_id = yandex_vpc_route_table.nat-instance-route.id
-}
-
-# Creating a NAT VM
-resource "yandex_compute_instance" "nat-vm" {
-  name        = "nat-vm"
-  platform_id = var.yandex_compute_instance_platform_id
-
-  resources {
-    core_fraction = 20
-    cores         = 2
-    memory        = 1
-  }
-
-  boot_disk {
-    initialize_params {
-      image_id = "fd80mrhj8fl2oe87o4e1"
+# Создаем группу машин
+resource "yandex_compute_instance_group" "lamp-group" {
+  name                = "vm-lamp"
+  folder_id           = var.folder_id
+  service_account_id  = "${yandex_iam_service_account.sa-ig.id}"
+  deletion_protection = false
+  instance_template {
+    platform_id = var.yandex_compute_instance_platform_id
+    resources {
+      memory = 2
+      cores  = 2
+    }
+    boot_disk {
+      mode = "READ_WRITE"
+      initialize_params {
+        image_id = "fd827b91d99psvq5fjit"
+        size     = 4
+      }
+    }
+    network_interface {
+      network_id = "${yandex_vpc_network.netology.id}"
+      subnet_ids = ["${yandex_vpc_subnet.public-subnet.id}"]
+      nat        = "true"
+    }
+    metadata = {
+      user-data = "#cloud-config\nusers:\n  - name: ubuntu\n    groups: sudo,wheel\n    shell: /bin/bash\n    sudo: ['ALL=(ALL) NOPASSWD:ALL']\n    ssh-authorized-keys:\n      - ${file("~/.ssh/id_rsa.pub")}runcmd:\n  - echo '<html><head><title>Test image</title></head><body><img src=${var.image_id}></body></html>' > /var/www/html/index.html"
+    }
+    network_settings {
+      type = "STANDARD"
     }
   }
 
-  scheduling_policy {
-    preemptible = true
-  }
-
-  network_interface {
-    subnet_id          = yandex_vpc_subnet.public-subnet.id
-    ip_address         = "192.168.10.254"
-    nat                = true
-  }
-
-  metadata = {
-    serial-port-enable = var.metadata_map.metadata["serial-port-enable"]
-    ssh-keys           = "${local.ssh_key}"
-  }
-}
-
-# Creating a Public VM
-resource "yandex_compute_instance" "vm-public"{
-  name        = "vm-public"
-  platform_id = var.yandex_compute_instance_platform_id
-  resources {
-    core_fraction = 20
-    cores         = 2
-    memory        = 1
-  }
-  boot_disk {
-    initialize_params {
-      image_id = data.yandex_compute_image.ubuntu.image_id
+  scale_policy {
+    fixed_scale {
+      size = 3
     }
   }
-  scheduling_policy {
-    preemptible = true
-  }
-  network_interface {
-    subnet_id = yandex_vpc_subnet.public-subnet.id
-    nat       = true
+
+  allocation_policy {
+    zones = ["${var.default_zone}"]
   }
 
-  metadata = {
-    serial-port-enable = var.metadata_map.metadata["serial-port-enable"]
-    ssh-keys           = "${local.ssh_key}"
+  deploy_policy {
+    max_unavailable = 1
+    max_creating    = 2
+    max_expansion   = 2
+    max_deleting    = 1
   }
-}
 
-data "yandex_compute_image" "ubuntu" {
-  family = var.yandex_compute_image
-}
-
-# Creating a route table and static route
-resource "yandex_vpc_route_table" "nat-instance-route" {
-  name       = "private-into-nat"
-  network_id = yandex_vpc_network.netology.id
-  static_route {
-    destination_prefix = "0.0.0.0/0"
-    next_hop_address   = "192.168.10.254"
-  }
-}
-
-# Creating a Private VM
-resource "yandex_compute_instance" "vm-private"{
-  name        = "vm-private"
-  platform_id = var.yandex_compute_instance_platform_id
-  resources {
-    core_fraction = 20
-    cores         = 2
-    memory        = 1
-  }
-  boot_disk {
-    initialize_params {
-      image_id = data.yandex_compute_image.ubuntu.image_id
+  health_check {
+    http_options {
+      port = 80
+      path = "/index.html"
     }
   }
-  scheduling_policy {
-    preemptible = true
-  }
-  network_interface {
-    subnet_id = yandex_vpc_subnet.private-subnet.id
-  }
 
-  metadata = {
-    serial-port-enable = var.metadata_map.metadata["serial-port-enable"]
-    ssh-keys           = "${local.ssh_key}"
+  depends_on = [yandex_storage_bucket.test-bucket]
+
+  load_balancer {
+    target_group_name        = "vm-lamp"
+    target_group_description = "test balancer"
   }
 }
