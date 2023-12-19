@@ -1,9 +1,10 @@
 # Создаем группу машин
-resource "yandex_compute_instance_group" "lamp-group" {
+resource "yandex_compute_instance_group" "test-ig-group" {
   name                = "vm-lamp"
   folder_id           = var.folder_id
-  service_account_id  = "${yandex_iam_service_account.sa-ig.id}"
+  service_account_id  = "${yandex_iam_service_account.ig-sa.id}"
   deletion_protection = false
+  depends_on          = [yandex_resourcemanager_folder_iam_binding.editor]
   instance_template {
     platform_id = var.yandex_compute_instance_platform_id
     resources {
@@ -50,14 +51,13 @@ resource "yandex_compute_instance_group" "lamp-group" {
   health_check {
     http_options {
       port = 80
-      path = "/index.html"
+      path = "/"
     }
   }
 
-  depends_on = [yandex_storage_bucket.test-bucket]
-
   load_balancer {
     target_group_name        = "vm-lamp"
-    target_group_description = "test balancer"
+    target_group_description = "test-balancer"
   }
 }
+

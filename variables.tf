@@ -59,5 +59,10 @@ variable "metadata_map" {
 
 variable "image_id" {
   type        = string
-  default     = "https://storage.yandexcloud.net/test-storage-picture/123.png"
+  default     = "https://storage.yandexcloud.net/test-bucket-kibenetiq-yc/123.png"
+}
+
+variable "sa_bucket" {
+  type        = string
+  description = "Service Account ID: sa-object-storage-editor"
 }

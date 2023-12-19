@@ -1,30 +1,33 @@
-# Создаем сервисный аккаунт для работы в Object Storage
-resource "yandex_iam_service_account" "test-sa" {
-  name = "test-sa"
-}
+# # Создаем сервисный аккаунт для работы в Object Storage
+# resource "yandex_iam_service_account" "sa-object-storage-editor" {
+#   name = "sa-object-storage-editor"
+# }
 
-# Назначение роли сервисному аккаунту
-resource "yandex_resourcemanager_folder_iam_member" "test-sa-editor" {
-  folder_id = var.folder_id
-  role      = "storage.editor"
-  member    = "serviceAccount:${yandex_iam_service_account.test-sa.id}"
-}
+# # Назначение роли сервисному аккаунту (Делаем руками в админке YC)
+# resource "yandex_resourcemanager_folder_iam_member" "sa-object-storage-editor-role" {
+#   folder_id = var.folder_id
+#   role      = "storage.editor"
+#   member    = "serviceAccount:${yandex_iam_service_account.sa-object-storage-editor.id}"
+# }
 
-# Создаем статический ключ доступа
 resource "yandex_iam_service_account_static_access_key" "sa-static-key" {
-  service_account_id = yandex_iam_service_account.test-sa.id
+  service_account_id = var.sa_bucket
   description        = "static access key for object storage"
 }
 
-
-
-# Создаем сервисный аккаунт для работы Instance Group 
-resource "yandex_iam_service_account" "sa-ig" {
-  name = "sa-ig"
+resource "yandex_iam_service_account" "ig-sa" {
+  name        = "ig-sa"
+  description = "service account to manage IG"
 }
+
 # Назначение роли сервисному аккаунту
-resource "yandex_resourcemanager_folder_iam_member" "sa-ig-editor" {
+resource "yandex_resourcemanager_folder_iam_binding" "editor" {
   folder_id = var.folder_id
   role      = "editor"
-  member    = "serviceAccount:${yandex_iam_service_account.sa-ig.id}"
+  members    = [
+    "serviceAccount:${yandex_iam_service_account.ig-sa.id}",
+  ]
+  depends_on = [
+    yandex_iam_service_account.ig-sa,
+  ]
 }
