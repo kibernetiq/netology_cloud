@@ -19,10 +19,55 @@ variable "default_zone" {
   description = "https://cloud.yandex.ru/docs/overview/concepts/geo-scope"
 }
 
+variable "a_zone" {
+  type        = string
+  default     = "ru-central1-a"
+}
+
+variable "b_zone" {
+  type        = string
+  default     = "ru-central1-b"
+}
+
+variable "c_zone" {
+  type        = string
+  default     = "ru-central1-c"
+}
+
+variable "a_zone_cidr" {
+  type        = list(string)
+  default     = ["10.2.0.0/24"]
+}
+
+variable "b_zone_cidr" {
+  type        = list(string)
+  default     = ["10.3.0.0/24"]
+}
+
+variable "c_zone_cidr" {
+  type        = list(string)
+  default     = ["10.4.0.0/24"]
+}
+
 variable "public_cidr" {
   type        = list(string)
-  default     = ["192.168.10.0/24"]
+  default     = ["192.168.1.0/24"]
   description = "https://cloud.yandex.ru/docs/vpc/operations/subnet-create"
+}
+
+variable "a_zone_public_cidr" {
+  type        = list(string)
+  default     = ["192.168.2.0/24"]
+}
+
+variable "b_zone_public_cidr" {
+  type        = list(string)
+  default     = ["192.168.3.0/24"]
+}
+
+variable "c_zone_public_cidr" {
+  type        = list(string)
+  default     = ["192.168.4.0/24"]
 }
 
 variable "vpc_name" {
@@ -42,12 +87,6 @@ variable "yandex_compute_instance_platform_id" {
   description = "https://cloud.yandex.com/en/docs/cli/cli-ref/managed-services/compute/instance/"
 }
 
-variable "yandex_compute_image" {
-  type        = string
-  default     = "ubuntu-2004-lts"
-  description = "https://cloud.yandex.ru/docs/cli/cli-ref/managed-services/compute/image/"
-}
-
 variable "metadata_map" {
   type = map
   default     = {
@@ -57,12 +96,12 @@ variable "metadata_map" {
   }
 }
 
-variable "image_id" {
-  type        = string
-  default     = "https://storage.yandexcloud.net/test-bucket-kibenetiq-yc/123.png"
-}
+# variable "image_id" {
+#   type        = string
+#   default     = "https://storage.yandexcloud.net/test-bucket-kibenetiq-yc/123.png"
+# }
 
-variable "sa_bucket" {
-  type        = string
-  description = "Service Account ID: sa-object-storage-editor"
-}
+# variable "sa_bucket" {
+#   type        = string
+#   description = "Service Account ID: sa-object-storage-editor"
+# }
